@@ -17,6 +17,7 @@ This is a "baby" RAG system that takes 15 technology-related text snippets, conv
 - ✅ Natural language query interface
 - ✅ Similarity scoring and ranking
 - ✅ Interactive demo mode
+- ✅ FastAPI endpoint for programmatic access
 
 ## Installation
 
@@ -50,6 +51,44 @@ Try asking questions like:
 - "Tell me about Python programming"
 - "What are databases?"
 - "Explain cloud computing"
+
+### Run the API Server
+
+```bash
+uvicorn rag_api:app --reload
+```
+
+Then visit `http://localhost:8000/docs` for interactive API docs.
+
+### API Endpoints
+
+- `GET /health` — verify the service is running
+- `POST /query` — ask questions (`{"question": "...", "n_results": 3}`)
+- `GET /collection/info` — metadata about the stored snippets
+- `GET /collection/snippets` — retrieve the full dataset
+
+### Run the MCP Server
+
+```bash
+python rag_mcp_server.py
+```
+
+Add this server to your Cursor `mcpServers` configuration, e.g.:
+
+```json
+{
+  "name": "Baby RAG",
+  "command": "python",
+  "args": ["rag_mcp_server.py"]
+}
+```
+
+The MCP server exposes a single tool `rag_query` that accepts:
+
+- `question` (string, required)
+- `n_results` (integer, optional, default 3, max 10)
+
+It returns the same payload as the FastAPI `/query` endpoint.
 
 ## How It Works
 
