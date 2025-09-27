@@ -1,0 +1,77 @@
+[
+  {
+    "id": 1,
+    "title": "Python Basics",
+    "content": "Python is a high-level, interpreted programming language known for its simplicity and readability. It was created by Guido van Rossum and first released in 1991. Python uses indentation to define code blocks instead of curly braces."
+  },
+  {
+    "id": 2,
+    "title": "Machine Learning",
+    "content": "Machine learning is a subset of artificial intelligence that enables computers to learn and make decisions from data without being explicitly programmed. It includes supervised learning, unsupervised learning, and reinforcement learning approaches."
+  },
+  {
+    "id": 3,
+    "title": "Neural Networks",
+    "content": "Neural networks are computing systems inspired by biological neural networks. They consist of interconnected nodes (neurons) that process information through weighted connections. Deep learning uses multi-layered neural networks."
+  },
+  {
+    "id": 4,
+    "title": "Data Science",
+    "content": "Data science combines statistics, programming, and domain expertise to extract insights from data. It involves data collection, cleaning, analysis, visualization, and interpretation to solve real-world problems."
+  },
+  {
+    "id": 5,
+    "title": "Web Development",
+    "content": "Web development involves creating websites and web applications. Frontend development focuses on user interface and experience, while backend development handles server-side logic, databases, and APIs."
+  },
+  {
+    "id": 6,
+    "title": "Database Systems",
+    "content": "Databases are organized collections of data stored electronically. Relational databases use tables with rows and columns, while NoSQL databases store data in various formats like documents, key-value pairs, or graphs."
+  },
+  {
+    "id": 7,
+    "title": "Cloud Computing",
+    "content": "Cloud computing delivers computing services over the internet, including servers, storage, databases, networking, and software. It offers scalability, cost-effectiveness, and accessibility from anywhere."
+  },
+  {
+    "id": 8,
+    "title": "Cybersecurity",
+    "content": "Cybersecurity protects digital systems, networks, and data from cyber threats. It includes measures like encryption, firewalls, antivirus software, and security protocols to prevent unauthorized access and attacks."
+  },
+  {
+    "id": 9,
+    "title": "Mobile Development",
+    "content": "Mobile development creates applications for smartphones and tablets. Native apps are built for specific platforms, while cross-platform apps work on multiple platforms using frameworks like React Native or Flutter."
+  },
+  {
+    "id": 10,
+    "title": "DevOps",
+    "content": "DevOps combines software development and IT operations to improve collaboration and productivity. It emphasizes automation, continuous integration, continuous deployment, and infrastructure as code."
+  },
+  {
+    "id": 11,
+    "title": "API Design",
+    "content": "APIs (Application Programming Interfaces) define how software components interact. REST APIs use HTTP methods and JSON, while GraphQL provides a flexible query language for data fetching."
+  },
+  {
+    "id": 12,
+    "title": "Version Control",
+    "content": "Version control tracks changes to files over time. Git is the most popular distributed version control system, allowing developers to collaborate, branch, merge, and maintain code history."
+  },
+  {
+    "id": 13,
+    "title": "Testing",
+    "content": "Software testing ensures code quality and functionality. It includes unit testing, integration testing, and end-to-end testing. Test-driven development writes tests before implementing features."
+  },
+  {
+    "id": 14,
+    "title": "Containerization",
+    "content": "Containerization packages applications with their dependencies into lightweight, portable containers. Docker is the most popular container platform, enabling consistent deployment across environments."
+  },
+  {
+    "id": 15,
+    "title": "Microservices",
+    "content": "Microservices architecture breaks applications into small, independent services that communicate over networks. Each service handles a specific business function and can be developed, deployed, and scaled independently."
+  }
+]
