@@ -90,6 +90,8 @@ The MCP server exposes a single tool `rag_query` that accepts:
 
 It returns the same payload as the FastAPI `/query` endpoint.
 
+Visit `http://localhost:3333/playground` (after starting the MCP server) for an HTML harness that walks through session initialization and lets you send custom JSON-RPC payloads.
+
 ## How It Works
 
 1. **Data Loading**: Loads 15 text snippets from `data/snippets.json`
