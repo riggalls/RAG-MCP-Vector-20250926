@@ -12,8 +12,8 @@ This is a "baby" RAG system that takes 15 technology-related text snippets, conv
 ## Features
 
 - ✅ 15 curated text snippets about technology topics
-- ✅ Vector embeddings using sentence-transformers
-- ✅ Local vector storage with ChromaDB
+- ✅ Lightweight TF-IDF vector search (scikit-learn)
+- ✅ No heavy model downloads required
 - ✅ Natural language query interface
 - ✅ Similarity scoring and ranking
 - ✅ Interactive demo mode
@@ -38,10 +38,9 @@ python rag_system.py
 
 This will:
 1. Load the text snippets
-2. Generate embeddings
-3. Store them in ChromaDB
-4. Run through demo queries
-5. Enter interactive mode for your own questions
+2. Build a TF-IDF vector index
+3. Run through demo queries
+4. Enter interactive mode for your own questions
 
 ### Example Queries
 
@@ -113,8 +112,7 @@ Visit `http://localhost:3333/playground` (after starting the MCP server) for an 
 
 ## Technical Details
 
-- **Embedding Model**: `all-MiniLM-L6-v2` (384-dimensional vectors)
-- **Vector Database**: ChromaDB (in-memory)
+- **Vector Index**: TF-IDF (scikit-learn)
 - **Similarity Metric**: Cosine similarity
 - **Language**: Python 3.7+
 
@@ -138,7 +136,7 @@ This is a foundation that can be extended with:
 ## Requirements
 
 - Python 3.7+
-- 2GB RAM (for embedding model)
-- Internet connection (for initial model download)
+- ~1GB RAM (lightweight TF-IDF index)
+- No external model download required
 
 Enjoy exploring your baby RAG system! 🎉

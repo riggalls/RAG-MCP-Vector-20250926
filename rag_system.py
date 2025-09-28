@@ -1,9 +1,8 @@
 import json
-import chromadb
-from sentence_transformers import SentenceTransformer
-import numpy as np
-from typing import List, Dict, Tuple
-import os
+from typing import Dict, List
+
+from sklearn.feature_extraction.text import TfidfVectorizer
+from sklearn.metrics.pairwise import cosine_similarity
 
 class BabyRAGSystem:
     def __init__(self, data_path: str = "data/snippets.json", collection_name: str = "tech_snippets"):
@@ -16,20 +15,19 @@ class BabyRAGSystem:
         """
         self.data_path = data_path
         self.collection_name = collection_name
-        
-        # Initialize the embedding model
-        print("Loading embedding model...")
-        self.model = SentenceTransformer('all-MiniLM-L6-v2')
-        
-        # Initialize ChromaDB
-        print("Initializing ChromaDB...")
-        self.client = chromadb.Client()
-        
-        # Load data and create collection
-        self.collection = None
-        self.snippets = []
+
+        # Load data
+        self.snippets: List[Dict[str, str]] = []
         self._load_data()
-        self._create_collection()
+
+        self.collection_size = len(self.snippets)
+
+        # Build vector index with TF-IDF (fast to install)
+        self.vectorizer = TfidfVectorizer(stop_words="english")
+        self.doc_matrix = None
+        self.documents: List[str] = []
+        self.vector_dimensions = 0
+        self._build_index()
     
     def _load_data(self):
         """Load text snippets from JSON file"""
@@ -44,46 +42,17 @@ class BabyRAGSystem:
             print(f"Error: Invalid JSON in {self.data_path}")
             raise
     
-    def _create_collection(self):
-        """Create Chroma collection and add embeddings"""
-        # Create or get collection
-        try:
-            self.collection = self.client.get_collection(name=self.collection_name)
-            print(f"Using existing collection: {self.collection_name}")
-        except:
-            self.collection = self.client.create_collection(name=self.collection_name)
-            print(f"Created new collection: {self.collection_name}")
-        
-        # Check if collection is empty
-        if self.collection.count() == 0:
-            print("Generating embeddings and adding to collection...")
-            self._add_snippets_to_collection()
-        else:
-            print(f"Collection already contains {self.collection.count()} documents")
-    
-    def _add_snippets_to_collection(self):
-        """Generate embeddings and add snippets to Chroma collection"""
-        documents = []
-        metadatas = []
-        ids = []
-        
-        for snippet in self.snippets:
-            # Combine title and content for better context
-            full_text = f"{snippet['title']}: {snippet['content']}"
-            documents.append(full_text)
-            metadatas.append({
-                "title": snippet['title'],
-                "id": snippet['id']
-            })
-            ids.append(str(snippet['id']))
-        
-        # Add to collection (Chroma will generate embeddings automatically)
-        self.collection.add(
-            documents=documents,
-            metadatas=metadatas,
-            ids=ids
+    def _build_index(self) -> None:
+        """Create TF-IDF matrix for the snippets."""
+        documents = [f"{snippet['title']}: {snippet['content']}" for snippet in self.snippets]
+        self.documents = documents
+        print("Generating TF-IDF vectors...")
+        self.doc_matrix = self.vectorizer.fit_transform(documents)
+        self.vector_dimensions = self.doc_matrix.shape[1]
+        print(
+            f"Built TF-IDF matrix for {self.doc_matrix.shape[0]} documents "
+            f"with {self.vector_dimensions} features"
         )
-        print(f"Added {len(documents)} documents to collection")
     
     def query(self, question: str, n_results: int = 3) -> List[Dict]:
         """
@@ -97,30 +66,26 @@ class BabyRAGSystem:
             List of relevant snippets with similarity scores
         """
         print(f"\n🔍 Querying: '{question}'")
-        
-        # Query the collection
-        results = self.collection.query(
-            query_texts=[question],
-            n_results=n_results
-        )
-        
-        # Format results
-        formatted_results = []
-        for i in range(len(results['documents'][0])):
-            doc_id = results['ids'][0][i]
-            document = results['documents'][0][i]
-            metadata = results['metadatas'][0][i]
-            distance = results['distances'][0][i]
-            
-            # Convert distance to similarity score (higher is better)
-            similarity_score = 1 - distance
-            
+
+        if self.doc_matrix is None:
+            raise RuntimeError("TF-IDF matrix not initialized")
+
+        query_vec = self.vectorizer.transform([question])
+        similarities = cosine_similarity(query_vec, self.doc_matrix).flatten()
+
+        limit = max(1, min(n_results, len(self.snippets)))
+        top_indices = similarities.argsort()[::-1][:limit]
+
+        formatted_results: List[Dict] = []
+        for idx in top_indices:
+            snippet = self.snippets[idx]
+            similarity = float(similarities[idx])
             formatted_results.append({
-                'id': doc_id,
-                'title': metadata['title'],
-                'content': document,
-                'similarity_score': similarity_score,
-                'distance': distance
+                'id': snippet['id'],
+                'title': snippet['title'],
+                'content': self.documents[idx],
+                'similarity_score': similarity,
+                'distance': 1 - similarity
             })
         
         return formatted_results
@@ -139,6 +104,17 @@ class BabyRAGSystem:
             print("-" * 30)
         
         return results
+
+    def get_snippets(self) -> List[Dict[str, str]]:
+        """Return all snippets with combined title and content."""
+        return [
+            {
+                "id": snippet["id"],
+                "title": snippet["title"],
+                "content": self.documents[idx],
+            }
+            for idx, snippet in enumerate(self.snippets)
+        ]
 
 def main():
     """Main function to demonstrate the RAG system"""

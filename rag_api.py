@@ -79,7 +79,7 @@ async def health() -> HealthResponse:
         raise HTTPException(status_code=503, detail="RAG system not initialized yet")
 
     try:
-        collection_size = rag_system.collection.count()
+        collection_size = rag_system.collection_size
     except Exception as exc:  # pragma: no cover - defensive
         logger.exception("Health check failed")
         raise HTTPException(status_code=500, detail=f"Health check failed: {exc}") from exc
@@ -136,9 +136,8 @@ async def collection_info() -> Dict[str, object]:
 
     return {
         "collection_name": rag_system.collection_name,
-        "total_documents": rag_system.collection.count(),
-        "embedding_model": "all-MiniLM-L6-v2",
-        "vector_dimensions": 384,
+        "total_documents": rag_system.collection_size,
+        "vector_dimensions": rag_system.vector_dimensions,
     }
 
 
@@ -147,16 +146,7 @@ async def collection_snippets() -> Dict[str, object]:
     if rag_system is None:
         raise HTTPException(status_code=503, detail="RAG system not initialized yet")
 
-    payload = rag_system.collection.get()
-
-    snippets = [
-        {
-            "id": payload["ids"][idx],
-            "title": payload["metadatas"][idx]["title"],
-            "content": payload["documents"][idx],
-        }
-        for idx in range(len(payload["ids"]))
-    ]
+    snippets = rag_system.get_snippets()
 
     return {"total_snippets": len(snippets), "snippets": snippets}
 
