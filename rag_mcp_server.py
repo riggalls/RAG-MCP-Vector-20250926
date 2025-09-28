@@ -13,8 +13,8 @@ from starlette.responses import HTMLResponse
 from rag_system import BabyRAGSystem
 
 
-HOST = os.getenv("MCP_HOST", "127.0.0.1")
-PORT = int(os.getenv("MCP_PORT", "3333"))
+HOST = os.getenv("MCP_HOST") or os.getenv("HOST", "0.0.0.0")
+PORT = int(os.getenv("MCP_PORT") or os.getenv("PORT", "3333"))
 
 mcp_server = FastMCP(
     name="Baby RAG MCP",
