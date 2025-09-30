@@ -7,6 +7,8 @@ import os
 from typing import Any, Dict
 
 from mcp.server.fastmcp import Context, FastMCP
+from mcp.server.fastmcp.resources import FunctionResource
+from mcp.types import ResourceContents
 from starlette.requests import Request
 from starlette.responses import HTMLResponse
 
@@ -38,13 +40,17 @@ main { max-width: 960px; margin: 0 auto; padding: 32px 18px 48px; }
 h1 { margin-bottom: 0.5rem; font-size: 2rem; }
 p.lead { margin-top: 0; margin-bottom: 1.5rem; color: #cfd0d7; }
 section { margin-bottom: 1.5rem; }
+section.no-gap-bottom { margin-bottom: 0; }
 label { display: block; font-weight: 600; margin-bottom: 0.4rem; }
 input[type="text"] { width: 100%; padding: 0.6rem; border-radius: 6px; border: 1px solid #2c2c36; background: #14141a; color: inherit; }
 textarea { width: 100%; min-height: 200px; padding: 0.75rem; border-radius: 6px; border: 1px solid #2c2c36; background: #14141a; color: inherit; font-family: "JetBrains Mono", "Fira Code", monospace; font-size: 0.95rem; }
 button { padding: 0.55rem 1rem; border-radius: 6px; border: 1px solid #2c2c36; background: #1f64ff; color: white; font-weight: 600; cursor: pointer; }
 button.secondary { background: transparent; color: #f9f9fb; border-color: #3a3a46; }
+button.success { background: #1fa971; border-color: #1fa971; color: #0b0b0f; }
+button.success:hover { background: #1a8c5e; border-color: #1a8c5e; }
 button:disabled { opacity: 0.5; cursor: not-allowed; }
 .button-row { display: flex; flex-wrap: wrap; gap: 0.75rem; align-items: center; }
+.between-row { margin: 1.5rem 0; }
 .status { margin-top: 0.75rem; font-size: 0.95rem; }
 .status[data-state="error"] { color: #ff8c8c; }
 .status[data-state="ok"] { color: #7cf59f; }
@@ -59,34 +65,40 @@ a { color: #86b7ff; }
   <h1>Baby RAG MCP Playground</h1>
   <p class=\"lead\">Initialize a session with the MCP server and send raw JSON-RPC messages. The harness handles the session header for you.</p>
 
-  <section>
-    <label for=\"serverUrl\">MCP server endpoint</label>
-    <input id=\"serverUrl\" type=\"text\" placeholder=\"http://127.0.0.1:3333/mcp\">
-    <div class=\"button-row\">
-      <button id=\"initializeBtn\">Initialize Session</button>
-      <button id=\"resetBtn\" class=\"secondary\">Reset Session</button>
-      <span>Session ID: <code id=\"sessionIdValue\">(none)</code></span>
+  <section class="no-gap-bottom">
+    <label for="serverUrl">MCP server endpoint</label>
+    <input id="serverUrl" type="text" placeholder="http://127.0.0.1:3333/mcp">
+    <div class="button-row">
+      <button id="initializeBtn">Initialize Session</button>
+      <button id="resetBtn" class="secondary">Reset Session</button>
+      <span>Session ID: <code id="sessionIdValue">(none)</code></span>
     </div>
-    <div id=\"statusMessage\" class=\"status\" data-state=\"ok\"></div>
+    <div id="statusMessage" class="status" data-state="ok"></div>
   </section>
 
+  <div class="button-row between-row">
+    <button id="loadExampleBtn" class="success">Load Example Request</button>
+    <button id="loadToolsListBtn" class="success">tools/list</button>
+    <button id="loadResourcesListBtn" class="success">resources/list</button>
+  </div>
+
   <section>
-    <label for=\"requestBody\">Request JSON</label>
-    <textarea id=\"requestBody\"></textarea>
-    <div class=\"button-row\">
-      <button id=\"sendRequestBtn\" disabled>Send Request</button>
+    <label for="requestBody">Request JSON</label>
+    <textarea id="requestBody"></textarea>
+    <div class="button-row">
+      <button id="sendRequestBtn" disabled>Send Request</button>
       <span>Tip: change <code>params.arguments.question</code> to try different prompts.</span>
     </div>
   </section>
 
-  <section class=\"io-grid\">
+  <section class="io-grid">
     <div>
       <h3>Last Request</h3>
-      <pre id=\"lastRequest\"></pre>
+      <pre id="lastRequest"></pre>
     </div>
     <div>
       <h3>Last Response</h3>
-      <pre id=\"lastResponse\"></pre>
+      <pre id="lastResponse"></pre>
     </div>
   </section>
 </main>
@@ -101,6 +113,9 @@ a { color: #86b7ff; }
   const statusMessage = document.getElementById('statusMessage');
   const lastRequest = document.getElementById('lastRequest');
   const lastResponse = document.getElementById('lastResponse');
+  const loadExampleBtn = document.getElementById('loadExampleBtn');
+  const loadToolsListBtn = document.getElementById('loadToolsListBtn');
+  const loadResourcesListBtn = document.getElementById('loadResourcesListBtn');
 
   let sessionId = null;
 
@@ -255,6 +270,36 @@ a { color: #86b7ff; }
   initializeBtn.addEventListener('click', initializeSession);
   sendRequestBtn.addEventListener('click', sendCustomRequest);
   resetBtn.addEventListener('click', resetSession);
+  loadExampleBtn.addEventListener('click', () => {
+    requestBodyInput.value = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'call-1',
+      method: 'tools/call',
+      params: {
+        name: 'rag_query',
+        arguments: {
+          question: 'What is machine learning?',
+          n_results: 3
+        }
+      }
+    }, null, 2);
+  });
+  loadToolsListBtn.addEventListener('click', () => {
+    requestBodyInput.value = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'tools-list-1',
+      method: 'tools/list',
+      params: {}
+    }, null, 2);
+  });
+  loadResourcesListBtn.addEventListener('click', () => {
+    requestBodyInput.value = JSON.stringify({
+      jsonrpc: '2.0',
+      id: 'resources-list-1',
+      method: 'resources/list',
+      params: {}
+    }, null, 2);
+  });
 
   requestBodyInput.value = JSON.stringify({
     jsonrpc: '2.0',
@@ -284,22 +329,16 @@ async def playground(_: Request) -> HTMLResponse:
     return HTMLResponse(content=HARNESS_HTML)
 
 
-def _ensure_rag(context: Context) -> BabyRAGSystem:
-    server = context.fastmcp
-    instance = getattr(server, "_rag_instance", None)
-    if instance is None:
-        instance = BabyRAGSystem()
-        setattr(server, "_rag_instance", instance)
-    return instance
-
-
 @mcp_server.tool(name="rag_query", description="Query the Baby RAG system for relevant snippets")
-async def rag_query(question: str, n_results: int = 3, context: Context | None = None) -> Dict[str, Any]:
+async def rag_query(
+    question: str,
+    n_results: int = 3,
+    context: Context | None = None,
+) -> Dict[str, Any]:
     if not question.strip():
         raise ValueError("question cannot be empty")
     if not 1 <= n_results <= 10:
         raise ValueError("n_results must be between 1 and 10")
-
     if context is None:
         raise ValueError("context is required")
 
@@ -310,6 +349,39 @@ async def rag_query(question: str, n_results: int = 3, context: Context | None =
         "results": results,
         "total_results": len(results),
     }
+
+
+def _register_resources(server: FastMCP, rag: BabyRAGSystem) -> None:
+    if getattr(server, "_snippet_resources_initialized", False):
+        return
+
+    for snippet in rag.get_snippets():
+        uri = f"vector://snippets/{snippet['id']}"
+        resource = FunctionResource.from_function(
+            fn=lambda content=snippet["content"]: content,
+            uri=uri,
+            name=f"snippet-{snippet['id']}",
+            title=snippet["title"],
+            description=snippet["content"],
+            mime_type="text/plain",
+        )
+        server.add_resource(resource)
+
+    setattr(server, "_snippet_resources_initialized", True)
+
+
+def _ensure_rag(context: Context) -> BabyRAGSystem:
+    server = context.fastmcp
+    instance = getattr(server, "_rag_instance", None)
+    if instance is None:
+        instance = BabyRAGSystem()
+        setattr(server, "_rag_instance", instance)
+
+    _register_resources(server, instance)
+    return instance
+
+
+# Removed FastMCP resource decorator; resource access handled via FunctionResource registrations.
 
 
 def main() -> None:
